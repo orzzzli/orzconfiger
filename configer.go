@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -49,6 +50,34 @@ func InitConfiger(path string) {
 	go hotLoadingConfiger()
 }
 
+/*
+	Get function return value and is ok.
+*/
+func GetString(section string, key string) (string,bool) {
+	value, ok := ConfigerSection[section][key]
+	return value, ok
+}
+
+/*
+	Get function return int and is ok.
+	If not exist return -1 and false.
+	If convert err return 0 and false.
+*/
+func GetInt(section string, key string) (int,bool) {
+	value, ok := ConfigerSection[section][key]
+	if ok {
+		valueInt,err := strconv.Atoi(value)
+		if err == nil {
+			return valueInt,true
+		}
+		return 0,false
+	}
+	return -1,false
+}
+
+/*
+	Hot Loading config while file md5 changed.
+*/
 func hotLoadingConfiger() {
 	lastMD5 := ""
 	for {
