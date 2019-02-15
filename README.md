@@ -1,0 +1,2 @@
+# goconfiger
+.ini go configer
