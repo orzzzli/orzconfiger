@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -92,7 +91,6 @@ func hotLoadingConfiger() {
 				log.Fatal("io copy file error : " + err.Error())
 			}
 			md5Str := hex.EncodeToString(md5Obj.Sum(nil))
-			fmt.Println(md5Str)
 			//first time
 			if lastMD5 == "" {
 				lastMD5 = md5Str
