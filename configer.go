@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"io"
 	"log"
 	"os"
@@ -29,24 +30,28 @@ const DefaultHotLoading = true
 const DefaultDebug = false
 const DefaultCommentChar = ";"
 
-func InitConfiger(path string) {
+func InitConfiger(path string) error {
 	ConfigerInfoObj.Debug = DefaultDebug
 	ConfigerInfoObj.ScanSec = DefaultScanSec
 	ConfigerInfoObj.HotLoading = DefaultHotLoading
 	ConfigerInfoObj.CommentChar = DefaultCommentChar
 
 	if path == "" {
-		path = loadPathFromParam()
+		return errors.New("config path is empty")
 	}
 
-	exist := fileExists(path)
+	exist,err := fileExists(path)
+	if err != nil {
+		return err
+	}
 	if !exist {
-		log.Fatal("config file is not exist.")
+		return errors.New("config file is not exist")
 	}
 	ConfigerInfoObj.Path = path
 
 	invokeConfigerObj()
 	go hotLoadingConfiger()
+	return nil
 }
 
 /*
@@ -77,18 +82,18 @@ func GetInt(section string, key string) (int,bool) {
 /*
 	Hot Loading config while file md5 changed.
 */
-func hotLoadingConfiger() {
+func hotLoadingConfiger() error {
 	lastMD5 := ""
 	for {
 		if ConfigerInfoObj.HotLoading {
 			file, err := os.Open(ConfigerInfoObj.Path)
 			if err != nil {
-				log.Fatal("open config file err : " + err.Error())
+				return errors.New("open config file err : " + err.Error())
 			}
 			md5Obj := md5.New()
 			_, err = io.Copy(md5Obj, file)
 			if err != nil {
-				log.Fatal("io copy file error : " + err.Error())
+				return errors.New("io copy file error : " + err.Error())
 			}
 			md5Str := hex.EncodeToString(md5Obj.Sum(nil))
 			//first time
@@ -105,40 +110,20 @@ func hotLoadingConfiger() {
 }
 
 /*
-	Load config path from command line parameter.
-	Usage: ./xxxx -c config/path
-*/
-func loadPathFromParam() string {
-	file := ""
-	// get config file path from command line parameter
-	for i := range os.Args {
-		if os.Args[i] == "-c" && len(os.Args) > i+1 {
-			file = os.Args[i+1]
-			break
-		}
-	}
-	if file == "" {
-		log.Fatal("not specify config file path in command line, try -c path.")
-	}
-
-	return file
-}
-
-/*
 	Check file is dir and check file exist.
 */
-func fileExists(path string) bool {
+func fileExists(path string) (bool,error) {
 	info, err := os.Stat(path)
 	if err == nil {
 		if info.IsDir() {
-			log.Fatal("file path is a folder.")
+			return false, errors.New("file path is a folder.")
 		}
-		return true
+		return true,nil
 	}
 	if os.IsNotExist(err) {
-		return false
+		return false,nil
 	}
-	return false
+	return false,nil
 }
 
 /*
