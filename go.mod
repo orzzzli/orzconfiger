@@ -1,1 +1,1 @@
-module orzConfiger
+module orzconfiger
